@@ -10,14 +10,18 @@ public:
 
     virtual void onCallState(OnCallStateParam &prm) override {
         CallInfo ci = getInfo();
-        std::cout << "*** Call state changed: " << ci.stateText << std::endl;
+        std::cout << "Call state changed: " << ci.stateText << std::endl;
 
         if (ci.state == PJSIP_INV_STATE_CONFIRMED) {
             std::cout << "Call connected!" << std::endl;
 
             sendDTMF("9");
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            sendDTMF("014");
+            sendDTMF("0");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            sendDTMF("1");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            sendDTMF("4");
 
             AudioMedia callAudio = getAudioMedia(-1);  
             AudioMedia& playbackDev = Endpoint::instance().audDevManager().getPlaybackDevMedia();
@@ -52,7 +56,7 @@ class MyAccount : public Account {
 public:
     virtual void onRegState(OnRegStateParam &prm) {
         AccountInfo ai = getInfo();
-        std::cout << (ai.regIsActive ? "*** Register:" : "*** Unregister:")
+        std::cout << (ai.regIsActive ? "Register:" : "Unregister:")
                   << " code=" << prm.code << std::endl;
     }
 
@@ -69,12 +73,9 @@ int main() {
 
     EpConfig ep_cfg;
     ep_cfg.uaConfig.threadCnt = 1;
-    ep_cfg.medConfig.clockRate = 16000;
-    ep_cfg.medConfig.ecTailLen = 0;
-    ep_cfg.medConfig.sndClockRate = 16000;
+    ep_cfg.medConfig.clockRate = 8000;
+    ep_cfg.medConfig.sndClockRate = 8000;
     ep_cfg.medConfig.noVad = true;
-    ep_cfg.medConfig.sndRecLatency = 1;
-    ep_cfg.medConfig.sndPlayLatency = 1;
     ep_cfg.medConfig.audioFramePtime = 10;
     ep.libInit(ep_cfg);
 
@@ -89,7 +90,6 @@ int main() {
     }
 
     ep.libStart();
-    std::cout << "*** PJSUA2 STARTED ***" << std::endl;
 
     AccountConfig acfg;
     acfg.idUri = "sip:*@*";
@@ -110,7 +110,7 @@ int main() {
     }
 
     while (true) {
-        ep.libHandleEvents(50);
+        ep.libHandleEvents(10);
     }
 
     delete call;
